@@ -14,7 +14,10 @@
 #define MinSpeed 90
 #define MaxSpeed 255
 
-#define k_p 0.3
+#define TRIG 10
+#define ECHO 11
+
+#define k_p 2
 
 MPU6050 mpu;
 
@@ -104,6 +107,39 @@ void keep(){
     
 }
 
+int get_dist(){
+  digitalWrite(TRIG, LOW);
+  delayMicroseconds(2);
+  digitalWrite(TRIG, HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TRIG, LOW);
+  int duration = pulseIn(ECHO, HIGH);
+  //скорость звука 0.034 
+  return duration * 0.034 / 2;
+}
+
+void keep_dist(int dist){
+    int point = dist;
+    int err = 0;
+    int speed = 0;
+    while (true)
+    {
+        err = get_dist() - point;
+        speed = constrain(k_p*abs(err), 0, MaxSpeed-MinSpeed);
+        if (abs(err) > 2)
+        {   
+            // dash();
+            motor1.setSpeed((MinSpeed + speed)*(err/abs(err))*coef[1]);
+            motor2.setSpeed((MinSpeed + speed)*(err/abs(err))*coef[0]);
+        }
+        else{
+            motor1.setSpeed(0);
+            motor2.setSpeed(0);
+        }
+        delay(50);
+    }
+}
+
 void setup() {
   Serial.begin(115200);
   motor1.setMode(AUTO);
@@ -112,11 +148,12 @@ void setup() {
   mpu.begin(MPU6050_SCALE_2000DPS, MPU6050_RANGE_2G);
   mpu.calibrateGyro();
   mpu.setThreshold(3);
+
+  pinMode(TRIG, OUTPUT); 
+  pinMode(ECHO, INPUT);
 }
 
 int x = 1;
 void loop() {
-  Serial.println("Start");
-  keep();
-  delay(100000000);
+  keep_dist(20);
 }
