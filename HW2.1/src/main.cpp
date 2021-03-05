@@ -11,7 +11,7 @@
 #define Mot5 5
 #define Mot6 6
 
-#define MinSpeed 80
+#define MinSpeed 90
 #define MaxSpeed 255
 
 #define k_p 0.3
@@ -25,14 +25,6 @@ float timeStep = 0.1;
 
 float coef[2] = {1.0, 0.8};
 
-
-//=== MILLISTIMER MACRO v2 ===
-#define EVERY_MS(x) \
-  static uint32_t tmr;\
-  bool flag = millis() - tmr >= (x);\
-  if (flag) tmr += (x);\
-  if (flag)
-//===========================
 
 GMotor motor1(DRIVER3WIRE, Mot1, Mot2, Mot3, LOW);
 GMotor motor2(DRIVER3WIRE, Mot4, Mot5, Mot6, LOW);
@@ -75,6 +67,43 @@ void turn(int degrees){
 
 }
 
+void dash(){
+    motor1.setSpeed((MinSpeed + 50)*coef[1]);
+    motor2.setSpeed(-(MinSpeed + 50)*coef[0]);
+    delay(20);
+    motor1.setSpeed(-(MinSpeed + 50)*coef[1]);
+    motor2.setSpeed((MinSpeed + 50)*coef[0]);
+    delay(20);
+    motor1.setSpeed(0);
+    motor2.setSpeed(0);
+}
+
+void keep(){
+    int point = yaw;
+    int err = 0;
+    int speed = 0;
+    while (true)
+    {
+        err = point - yaw;
+        speed = constrain(k_p*abs(err), 0, MaxSpeed-MinSpeed);
+        if (abs(err) > 5.0)
+        {   
+            // dash();
+            motor1.setSpeed((MinSpeed + speed)*(err/abs(err))*coef[1]);
+            motor2.setSpeed(-(MinSpeed + speed)*(err/abs(err))*coef[0]);
+        }
+        else{
+            motor1.setSpeed(0);
+            motor2.setSpeed(0);
+        }
+        
+        Vector norm = mpu.readNormalizeGyro();
+        yaw = yaw + norm.ZAxis * (millis()-timer)/1000;
+        timer = millis();
+    }
+    
+}
+
 void setup() {
   Serial.begin(115200);
   motor1.setMode(AUTO);
@@ -88,25 +117,6 @@ void setup() {
 int x = 1;
 void loop() {
   Serial.println("Start");
-  delay(5000);
-  turn(-90);
-  delay(1000);
-  turn(90);
-  delay(1000);
-  turn(180);
-  delay(1000);
-  turn(180);
-  delay(1000);
-  turn(45);
-  delay(1000);
-  turn(-45);
-  // motor1.setSpeed(100*coef[1]);
-  // delay(500);
-  // motor1.setSpeed(0);
-  // delay(500);
-  // motor2.setSpeed(100*coef[0]);
-  // delay(500);
-  // motor2.setSpeed(0);
-  // delay(500);
+  keep();
   delay(100000000);
 }
