@@ -85,6 +85,4 @@ void loop() {
   motor2.setSpeed(Min_L+50*(255-Min_L));
   updateRPM();
   delay(250);
- 
-  
 }
