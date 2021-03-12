@@ -8,5 +8,5 @@
 ***
 # HW2
 
-* [2.2| Square movement](https://youtu.be/i156KNhqhHs)
+* [2.2| Square movement](https://youtu.be/JvKypBsp2o4)
 * [2.3| Forward movement with PID](https://youtu.be/ftGzSaXnXuw)
