@@ -26,8 +26,8 @@
 #define MaxRPS_L 5.7
 #define MaxRPS_R 6.5
 
-#define M_V 43.0
-#define M_W 7.0
+#define M_V 800.0
+#define M_W 502.0
 
 
 MPU6050 mpu;
@@ -47,8 +47,8 @@ float w = 0;
 
 float coef[2] = {1.0, 0.8};
 
-float r = 6.7/2;
-int L = 12;
+float r = 67;
+int L = 120;
 
 
 GMotor motor1(DRIVER3WIRE, Mot1, Mot2, Mot3, LOW);
@@ -90,20 +90,24 @@ int m1;
 int m2;
 
 void keepSpeed(int linear, int angular){
-  m1 = constrain(80 + P((v/M_V)*100, linear, 0.75) + angular + P((w/(M_W*PI))*100, angular, 0.9), 0, 255);
-  m2 = constrain(100 + P((v/M_V)*100, linear, 0.75) - angular - P((w/(M_W*PI))*100, angular, 0.9), 0, 255);
+  m1 = constrain(80 + P((v/M_V)*100, linear, 0.7)  - PID((w/(M_W))*100, angular, 1,0.5,0,(millis() - k_timer)/1000.0), 80, 255);
+  m2 = constrain(100 + P((v/M_V)*100, linear, 0.7) + PID((w/(M_W))*100, angular, 1,0.5,0,(millis() - k_timer)/1000.0),80, 255);
+  k_timer = millis();
+  
+  // m1 = constrain(80 + P((v/M_V)*100, linear, 0.7), 80, 255);
+  // m2 = constrain(100 + P((v/M_V)*100, linear, 0.7),80, 255);
   motor1.setSpeed(m1);
   motor2.setSpeed(m2);
 
-  Serial.print(m1);
-  Serial.print(',');
-  Serial.print(m2);
-  Serial.print(',');
-  Serial.print(v);
-  Serial.print(',');
+  // Serial.print((-(w/(M_W))*100+angular));
+  // Serial.print(',');
+  // Serial.print(80 + P((v/M_V)*100, linear, 0.7));
+  // Serial.print(',');
+  // Serial.print(P((w/(M_W))*100, angular, 10));
+  // Serial.print(',');
   Serial.print(w);
   Serial.println();
-  k_timer = millis();
+  
 }
 
 void updatePath(){
@@ -111,7 +115,7 @@ void updatePath(){
   w_r = PI*rps_r;
 
   v = (r/2)*(w_l+w_r);
-  w = (r/L)*(w_l-w_r);
+  w = (180.0/PI)*(r/L)*(w_l-w_r);
 
   if(isnan(v)){
     v = 0.0;
@@ -119,7 +123,7 @@ void updatePath(){
   }
 
   path = path + v*(millis()-p_timer)/1000.0;
-  angle = angle + (180.0/PI)*w*(millis()-p_timer)/1000.0;
+  angle = angle + w*(millis()-p_timer)/1000.0;
   p_timer = millis();
 
   // Serial.print(path);
@@ -130,56 +134,23 @@ void updatePath(){
 }
 
 void update(){
-  rps_r = (rWheelCounter/20.0)/((millis()-r_timer)/1000.0);
+  float k = 0.7;
+  if (isnan(rps_r))
+  {
+    rps_r = (rWheelCounter/20.0)/((millis()-r_timer)/1000.0);
+    rWheelCounter = 0;
+    rps_l = (lWheelCounter/20.0)/((millis()-r_timer)/1000.0);
+    lWheelCounter = 0;
+  }
+  
+  rps_r = (rWheelCounter/20.0)/((millis()-r_timer)/1000.0)*(k) + rps_r*(1-k);
   rWheelCounter = 0;
-  rps_l = (lWheelCounter/20.0)/((millis()-r_timer)/1000.0);
+  rps_l = (lWheelCounter/20.0)/((millis()-r_timer)/1000.0)*(k) + rps_l*(1-k);
   lWheelCounter = 0;
   r_timer = millis();
   updatePath();
 }
 
-void move(int dist){
-  int p_point = path + dist;
-  while (abs(p_point - path) > 3)
-  { 
-    motor1.setSpeed(200);
-    motor2.setSpeed(250);
-    update();
-    Serial.print(path);
-    Serial.print(',');
-    Serial.print(p_point);
-    Serial.print(',');
-    Serial.print(abs(p_point - path));
-    Serial.println();
-   
-  }
-  motor1.setSpeed(0);
-  motor2.setSpeed(0);
-}
-
-void turn(int deg){
-  int a_point = angle + deg;
-  while (abs(a_point - angle) > 3)
-  { 
-    if((deg/abs(deg)) > 0){
-      motor2.setSpeed(120 * (deg/abs(deg)));
-    }
-    else{
-      motor1.setSpeed(-80 * (deg/abs(deg)));
-    }
-    
-    update();
-
-    Serial.print(angle);
-    Serial.print(',');
-    Serial.print(a_point);
-    Serial.print(',');
-    Serial.print(abs(a_point - angle));
-    Serial.println();
-  }
-  motor1.setSpeed(0);
-  motor2.setSpeed(0);
-}
 
 void setup() {
   Serial.begin(115200);
@@ -191,35 +162,18 @@ void setup() {
 
   path = 0.0;
   angle = 0.0;
+  Serial.print("Right");
+  Serial.print(',');
+  Serial.print("Left");
+  Serial.println();
 }
 
 void loop() {
   update();
-  delay(47);
-  // keepSpeed(200,0);
+  delay(50);
+  keepSpeed(150,0);
   // motor1.setSpeed(80);
   // motor2.setSpeed(-100);
 
-  int a = 50;
-  int d = 15; 
-
-  
-  move(d);
-  delay(500);
-  turn(a);
-  delay(500);
-  move(d);
-  delay(500);
-  turn(a);
-  delay(500);
-  move(d);
-  delay(500);
-  turn(a);
-  delay(500);
-  move(d);
-  delay(500);
-  turn(a);
-  delay(500);
-  
-  delay(500000);
+  // delay(500000);
 }
