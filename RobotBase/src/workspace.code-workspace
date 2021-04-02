@@ -1,0 +1,31 @@
+{
+	"folders": [
+		{
+			"name": "Robot",
+			"path": "..\\..\\..\\..\\Documents\\PlatformIO\\Projects\\Robot"
+		},
+		{
+			"name": "HW2",
+			"path": "..\\..\\HW2"
+		},
+		{
+			"name": "Robot",
+			"path": "..\\..\\Robot"
+		},
+		{
+			"name": "HW3",
+			"path": "..\\..\\HW3"
+		},
+		{
+			"name": "CW1",
+			"path": "..\\..\\CW1"
+		},
+		{
+			"name": "HW2.2",
+			"path": ".."
+		}
+	],
+	"settings": {
+		"debug.openDebug": "neverOpen"
+	}
+}
