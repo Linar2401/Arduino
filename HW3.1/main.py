@@ -4,14 +4,9 @@ import numpy as np
 
 def find(path):
     cap = cv2.VideoCapture(path)
-    import time
-    timer = time.time()
+    cap.set(4, 240)
     while cap.isOpened():
-        delta = (time.time() - timer)
-        timer = time.time()
         ret, frame = cap.read()
-        if delta != 0:
-            frame = cv2.putText(frame, str(int(1 / delta)), (20, 50), 0, 2, (255, 0, 0), 1)
         k = cv2.waitKey(1)
         # остановка по клавишам ESC или q или Q
         if k == 27 or k == ord('q') or k == ord('Q'):
