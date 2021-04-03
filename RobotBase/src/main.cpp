@@ -162,18 +162,16 @@ void setup() {
 
   path = 0.0;
   angle = 0.0;
-  Serial.print("Right");
-  Serial.print(',');
-  Serial.print("Left");
-  Serial.println();
-
 }
 
-
+void move(int speed){
+  motor1.setSpeed(speed);
+  motor2.setSpeed(speed * 0.8);
+}
 
 void turn(int a){
   motor1.setSpeed(a);
-  motor2.setSpeed(-a);
+  motor2.setSpeed(-a * 0.8);
   update();
 }
 
@@ -206,13 +204,13 @@ void loop() {
     state = 0;
     break;
   case 2:
-    turn(value - 360);
+    turn(value - 200);
     break;
   case 3:
     keepSpeed(100,value - 4);
     break;
   case 4:
-    keepSpeed(value - 200,0);
+    move(value - 200);
     break;
   default:
     stop();
