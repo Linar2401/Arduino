@@ -89,15 +89,15 @@ int P(float input, float setpoint, float kp){
 int m1;
 int m2;
 
-void keepSpeed(int linear, int angular){
+void keepSpeed(int linear, int angular, int forward){
   m1 = constrain(80 + P((v/M_V)*100, linear, 0.7)  - PID((w/(M_W))*100, angular, 1,0.5,0,(millis() - k_timer)/1000.0), 80, 255);
   m2 = constrain(100 + P((v/M_V)*100, linear, 0.7) + PID((w/(M_W))*100, angular, 1,0.5,0,(millis() - k_timer)/1000.0),80, 255);
   k_timer = millis();
   
   // m1 = constrain(80 + P((v/M_V)*100, linear, 0.7), 80, 255);
   // m2 = constrain(100 + P((v/M_V)*100, linear, 0.7),80, 255);
-  motor1.setSpeed(m1);
-  motor2.setSpeed(m2);
+  motor1.setSpeed(m1*forward);
+  motor2.setSpeed(m2*forward);
 
   // Serial.print((-(w/(M_W))*100+angular));
   // Serial.print(',');
@@ -165,13 +165,13 @@ void setup() {
 }
 
 void move(int speed){
-  motor1.setSpeed(speed);
-  motor2.setSpeed(speed * 0.8);
+  motor1.setSpeed(speed * 0.8);
+  motor2.setSpeed(speed);
 }
 
 void turn(int a){
-  motor1.setSpeed(a);
-  motor2.setSpeed(-a * 0.8);
+  motor1.setSpeed(a*0.8);
+  motor2.setSpeed(-a);
   update();
 }
 
@@ -207,9 +207,12 @@ void loop() {
     turn(value - 200);
     break;
   case 3:
-    keepSpeed(100,value - 4);
+    keepSpeed(100,value - 4, 1);
     break;
   case 4:
+    keepSpeed(value - 200, 0, ((value > 200)? 1:-1));
+    break;
+  case 5:
     move(value - 200);
     break;
   default:
