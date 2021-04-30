@@ -7,14 +7,16 @@
 #define ServoPin1 7
 #define ServoPin2 8
 
-#define Mot1 A2
-#define Mot2 A1
-#define Mot3 A0
+#define Mot1 A3
+#define Mot2 A2
+#define Mot3 11
 
 #define Mot4 4
 #define Mot5 5
 #define Mot6 6
 
+#define TrigPin 9
+#define EchoPin 10
 
 #define RWS 2
 #define LWS 3
@@ -40,7 +42,7 @@ int lWheelCounter = 0;
 int rWheelCounter = 0;
 
 float coef[2] = {1.0, 0.8};
-int minSpeed[2] = {70, 110};
+int minSpeed[2] = {70, 100};
 
 GMotor motor1(DRIVER3WIRE, Mot1, Mot2, Mot3, LOW);
 GMotor motor2(DRIVER3WIRE, Mot4, Mot5, Mot6, LOW);
@@ -95,14 +97,16 @@ void move(int v, int l){
         err = point - yaw;
         speed = constrain(k_p*abs(err) + (abs(err) - abs(prev_err))*k_d, 0, MaxSpeed-MinSpeed - v);
                
-        if(v > 0){
-          motor1.setSpeed(minSpeed[0] + v + (speed)*(err/abs(err)));
-          motor2.setSpeed(minSpeed[1] + v -(speed)*(err/abs(err)));
-        }
-        else{
-          motor1.setSpeed(-(minSpeed[0] + v + (speed)*(err/abs(err))));
-          motor2.setSpeed(-(minSpeed[1] + v -(speed)*(err/abs(err))));
-        }
+//        if(v > 0){
+//          motor1.setSpeed(minSpeed[0] + v + (speed)*(err/abs(err)));
+//          motor2.setSpeed(minSpeed[1] + v -(speed)*(err/abs(err)));
+//        }
+//        else{
+//          motor1.setSpeed(-(minSpeed[0] + v + (speed)*(err/abs(err))));
+//          motor2.setSpeed(-(minSpeed[1] + v -(speed)*(err/abs(err))));
+//        }
+        motor1.setSpeed(minSpeed[0] + v + (speed)*(err/abs(err)));
+        motor2.setSpeed(minSpeed[1] + v -(speed)*(err/abs(err)));
         Vector norm = mpu.readNormalizeGyro();
         yaw = yaw + norm.ZAxis * (millis()-timer)/1000;
         timer = millis();
@@ -124,9 +128,16 @@ void grab(bool s){
   }
   
 }
+int dur;
 
 int getDist(){
-  return 20;
+  digitalWrite(TrigPin,LOW);
+  delayMicroseconds(2);
+  digitalWrite(TrigPin,HIGH);
+  delayMicroseconds(10);
+  digitalWrite(TrigPin,LOW);
+  dur = pulseIn(EchoPin, HIGH);
+  return dur * 0.017;
 }
 
 
@@ -152,22 +163,27 @@ void commandGet(){
   grab(true);
   move(-20, dist[min_ang]*10 - 50);
   turn(-(min_ang*10-20));
+  delay(500);
 }
 
 void commandRelease(){
   move(20, 100);
   grab(false);
   move(-20,100);
+  delay(500);
 }
 
 void commandGo2Position(int positionNumber){
   move(-40, 200*(positionNumber/2));
   turn(90*(positionNumber%2*2-1));
+  delay(500);
 }
 
 void commandGoFromPosition(int positionNumber){
   turn(-90*(positionNumber%2*2-1));
   move(40, 200*(positionNumber/2));
+  commandRelease();
+  delay(500);
 }
 
 void commandGetPackage(int positionNumber){
@@ -195,6 +211,9 @@ void setup()
 
   servo1.attach(ServoPin1);
   servo2.attach(ServoPin2);
+
+  pinMode(TrigPin, OUTPUT);
+  pinMode(EchoPin, INPUT);
 }
 
 int value = -1;
@@ -204,25 +223,30 @@ int data = -1;
 void loop()
 {
 //  Serial.println("Start");
-   if (Serial.available() > 0)
-  {
-    data = Serial.parseInt();
-    if (data != 0)
-    {
-      state = data/1000;
-      value = data % 1000;
-      Serial.println(data);
-    }
-  }
-  switch (state)
-  {
-  case 1:
-    commandGetPackage(value);       
-    state = 0;
-    break;
-  default:
-    state = 0;
-    break;
-  }
+//  commandGetPackage(1);
+  move(75,5000);
+//  motor1.setSpeed(95);
+//  Serial.println(rWheelCounter);
+//  delay(100000);
+//  if (Serial.available() > 0)
+//  {
+//    data = Serial.parseInt();
+//    if (data != 0)
+//    {
+//      state = data/1000;
+//      value = data % 1000;
+//      Serial.println(data);
+//    }
+//  }
+//  switch (state)
+//  {
+//  case 1:
+//    commandGetPackage(value);       
+//    state = 0;
+//    break;
+//  default:
+//    state = 0;
+//    break;
+//  }
 //  delay(1000000000);
 }
